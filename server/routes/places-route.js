@@ -1,4 +1,9 @@
+// index.js
+
 const express = require('express');
+
+// HttpError 모델을 불러와 사용합니다.
+const HttpError = require('../models/http-error');
 
 // Express의 Router를 사용하여 새로운 라우터를 생성합니다.
 const router = express.Router();
@@ -41,10 +46,9 @@ router.get('/:pid', (req, res, next) => {
         return p.id === placeId;
     });
 
+    // 만약 장소를 찾지 못했다면 HttpError를 발생시키지 않고, next 함수를 통해 에러를 전달합니다.
     if (!place) {
-        const error = new Error('장소를 찾을 수 없습니다')
-        error.code = 404;
-        return next(error);
+        return next(new HttpError('장소를 찾을 수 없습니다', 404));
     }
 
     // 찾은 장소를 JSON 형태로 응답합니다.
@@ -61,10 +65,11 @@ router.get('/user/:uid', (req, res, next) => {
         return p.creator === userId;
     });
 
+    // 만약 사용자를 찾지 못했다면 HttpError를 발생시킵니다.
     if (!place) {
-        const error = new Error('유저를 찾을 수 없습니다')
-        error.code = 404;
-       return next(error); // return 이 없으면 아래 res 가 실행되서 {} 가 반환된다 
+        return next(
+            new HttpError('유저를 찾을 수 없습니다', 404)
+        );
     }
 
     // 찾은 장소를 JSON 형태로 응답합니다.
