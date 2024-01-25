@@ -1,4 +1,6 @@
 const { v4: uuid } = require('uuid');
+const { validationResult } = require('express-validator');
+
 
 // HttpError 모델을 불러와 사용합니다.
 const HttpError = require('../models/http-error');
@@ -84,6 +86,12 @@ const getPlaceByUserId = (req, res, next) => {
 };
 
 const createPlace = (req, res, next) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        console.log(errors)
+        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+    }
+    
     const { title, description, coordinates, address, creator } = req.body;
 
     const createPlace = {
@@ -102,6 +110,12 @@ const createPlace = (req, res, next) => {
 
 
 const updatePlaceById = (req, res, next) => {
+
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        console.log(errors)
+        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+    }
     // 요청에서 필요한 데이터를 추출합니다.
     const { title, description } = req.body;
     const placeId = req.params.pid;
@@ -126,6 +140,10 @@ const updatePlaceById = (req, res, next) => {
 const deletePlaceById = (req, res, next) => {
     // 요청 파라미터에서 장소 ID를 추출합니다.
     const placeId = req.params.pid;
+
+    if(!DUMMY_PLACES.find(p => p.id === placeId)) {
+        throw new HttpError("삭제할 장소가 없습니다.",404)
+    }
 
     // DUMMY_PLACES 배열에서 해당 ID와 일치하지 않는 장소들로 새로운 배열을 생성하여 할당합니다.
     DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId);

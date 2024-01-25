@@ -3,6 +3,8 @@
 // Express 프레임워크를 가져옵니다.
 const express = require('express');
 
+const { check } = require('express-validator');
+
 // places-controllers.js 파일에서 정의한 컨트롤러 함수를 가져옵니다.
 const placeControllers = require('../controllers/places-controllers');
 
@@ -18,11 +20,30 @@ router.get('/:pid', placeControllers.getPlacesById);
 router.get('/user/:uid', placeControllers.getPlaceByUserId);
 
 // 추가 
-router.post('/',placeControllers.createPlace);
+router.post('/',
+    [
+        check('title')
+            .not()
+            .isEmpty(),
+        check('description')
+            .isLength({ min: 5 }),
+        check('address')
+            .not()
+            .isEmpty()
+    ],
+    placeControllers.createPlace);
 
-router.patch('/:pid',placeControllers.updatePlaceById );
+router.patch('/:pid',
+    [
+        check('title')
+            .not()
+            .isEmpty(),
+        check('description').isLength({ min: 5 })
+    ]
 
-router.delete('/:pid',placeControllers.deletePlaceById );
+    , placeControllers.updatePlaceById);
+
+router.delete('/:pid', placeControllers.deletePlaceById);
 
 // 라우터를 모듈로 내보냅니다.
 module.exports = router;

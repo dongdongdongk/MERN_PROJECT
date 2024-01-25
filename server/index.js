@@ -1,6 +1,7 @@
 const express = require('express');
 
 const placesRoutes = require('./routes/places-route');
+const usersRoutes = require('./routes/user-route');
 const HttpError = require('./models/http-error');
 
 const app = express();
@@ -10,6 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use('/api/places',placesRoutes); // => /api/places/ 로 시작하는 요청 라우팅
+app.use('/api/users', usersRoutes);
 
 // 에러 핸들링 미들웨어: 요청이 들어올 때 항상 실행되는 미들웨어입니다.
 app.use((req, res, next) => {
