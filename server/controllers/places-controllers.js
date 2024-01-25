@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator');
 
 // HttpError 모델을 불러와 사용합니다.
 const HttpError = require('../models/http-error');
+const getCoordsForAddress = require('../util/location');
 
 // 더미 데이터로 사용할 장소 정보를 정의합니다.
 let DUMMY_PLACES = [
@@ -85,14 +86,24 @@ const getPlaceByUserId = (req, res, next) => {
     res.json({ place });
 };
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
     const errors = validationResult(req);
     if(!errors.isEmpty()) {
         console.log(errors)
-        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+        next( new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422)) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
     }
     
-    const { title, description, coordinates, address, creator } = req.body;
+    const { title, description, address, creator } = req.body;
+
+    let coordinates;
+    
+    try {
+        coordinates =  await getCoordsForAddress(address)
+        
+    } catch (error) {
+        return next(error);
+    }
+
 
     const createPlace = {
         id: uuid(),
