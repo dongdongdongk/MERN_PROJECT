@@ -5,6 +5,8 @@ const { validationResult } = require('express-validator');
 // HttpError 모델을 불러와 사용합니다.
 const HttpError = require('../models/http-error');
 const getCoordsForAddress = require('../util/location');
+const Place = require('../models/places');
+const places = require('../models/places');
 
 // 더미 데이터로 사용할 장소 정보를 정의합니다.
 let DUMMY_PLACES = [
@@ -46,86 +48,107 @@ let DUMMY_PLACES = [
     }
 ]
 
+
 // 특정 장소 ID에 대한 정보를 반환하는 함수입니다.
-const getPlacesById = (req, res, next) => {
+const getPlacesById = async (req, res, next) => {
     // 요청 파라미터에서 장소 ID를 추출합니다.
     const placeId = req.params.pid;
 
-    // DUMMY_PLACES 배열에서 해당 ID와 일치하는 장소를 찾습니다.
-    const places = DUMMY_PLACES.filter(p => {
-        return p.id === placeId;
-    });
+    let places;
 
-    // 만약 장소를 찾지 못했다면 HttpError를 발생시키지 않고, next 함수를 통해 에러를 전달합니다.
-    if (!places || places.length === 0) {
-        return next(new HttpError('장소를 찾을 수 없습니다', 404));
+    try {
+        places = await Place.findById(placeId)
+    } catch (err) {
+        const error = new HttpError(
+            "오류발생 장소를 찾지 못했습니다", 500
+        )
+        return next(error)
     }
 
+
+    // 만약 장소를 찾지 못했다면 HttpError를 발생시키지 않고, next 함수를 통해 에러를 전달합니다.
+    if (!places) {
+        const error = new HttpError(
+            "유효한 장소 아이디를 찾지 못했습니다", 404
+        )
+        return next(error);
+    }
+
+
     // 찾은 장소를 JSON 형태로 응답합니다.
-    res.json({ places });
+    res.json({ places: places.toObject({ getters: true }) });
 };
 
+
+
 // 특정 사용자 ID에 대한 장소 정보를 반환하는 함수입니다.
-const getPlaceByUserId = (req, res, next) => {
+const getPlaceByUserId = async (req, res, next) => {
     // 요청 파라미터에서 사용자 ID를 추출합니다.
     const userId = req.params.uid;
 
-    // DUMMY_PLACES 배열에서 해당 사용자가 작성한 장소를 찾습니다.
-    const place = DUMMY_PLACES.find(p => {
-        return p.creator === userId;
-    });
+    let place;
+    try {
+        place = await Place.find({ creator: userId })
+    } catch (err) {
+        const error = new HttpError("장소를 불러오는데 실패했습니다", 500)
+        return next(error)
+    }
 
     // 만약 사용자를 찾지 못했다면 HttpError를 발생시킵니다.
-    if (!place) {
+    if (!place || place.length === 0) {
         return next(
             new HttpError('유저를 찾을 수 없습니다', 404)
         );
     }
 
     // 찾은 장소를 JSON 형태로 응답합니다.
-    res.json({ place });
+    res.json({ place: place.map(place => place.toObject({ getters: true })) });
 };
 
+
+
 const createPlace = async (req, res, next) => {
-    const errors = validationResult(req);
-    if(!errors.isEmpty()) {
-        console.log(errors)
-        next( new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422)) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+    const errors = validationResult(req); // express-validator를 사용하여 요청의 유효성을 검사합니다.
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        next(new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422)); // 에러가 배열로 나와서 첫 번째 인덱스의 경로를 사용하여 클라이언트에게 에러를 전달합니다.
     }
-    
-    const { title, description, address, creator } = req.body;
+
+    const { title, description, address, creator } = req.body; // 요청에서 필요한 데이터를 추출합니다.
 
     let coordinates;
-    
+
     try {
-        coordinates =  await getCoordsForAddress(address)
-        
+        coordinates = await getCoordsForAddress(address); // 주소를 좌표로 변환하는 유틸리티 함수를 사용하여 좌표를 얻습니다.
     } catch (error) {
-        return next(error);
+        return next(error); // 좌표 얻기가 실패하면 에러를 핸들링하여 다음 미들웨어로 전달합니다.
     }
 
-
-    const createPlace = {
-        id: uuid(),
+    const createPlace = new Place({
         title,
         description,
-        location: coordinates,
         address,
+        location: coordinates, // 얻은 좌표 정보를 사용하여 새로운 장소의 위치를 설정합니다.
+        image: 'https://cdn.coindeskkorea.com//news/photo/202102/72702_10249_4844.jpg', // 임시 이미지 URL을 설정합니다.
         creator
+    });
+
+    try {
+        await createPlace.save(); // 새로운 장소를 MongoDB에 저장합니다.
+    } catch (err) {
+        const error = new HttpError("새 장소 추가 실패", 500); // 저장 중에 에러가 발생하면 500 상태 코드와 함께 에러를 생성합니다.
+        return next(error); // 에러를 핸들링하여 다음 미들웨어로 전달합니다.
     }
 
-    DUMMY_PLACES.push(createPlace);
-
-    res.status(201).json({ place: createPlace });
+    res.status(201).json({ place: createPlace }); // 클라이언트에게 성공적인 응답을 전송합니다.
 }
-
 
 const updatePlaceById = (req, res, next) => {
 
     const errors = validationResult(req);
-    if(!errors.isEmpty()) {
+    if (!errors.isEmpty()) {
         console.log(errors)
-        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`,422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
     }
     // 요청에서 필요한 데이터를 추출합니다.
     const { title, description } = req.body;
@@ -148,12 +171,14 @@ const updatePlaceById = (req, res, next) => {
     res.status(200).json({ place: updatePlace });
 }
 
+
+
 const deletePlaceById = (req, res, next) => {
     // 요청 파라미터에서 장소 ID를 추출합니다.
     const placeId = req.params.pid;
 
-    if(!DUMMY_PLACES.find(p => p.id === placeId)) {
-        throw new HttpError("삭제할 장소가 없습니다.",404)
+    if (!DUMMY_PLACES.find(p => p.id === placeId)) {
+        throw new HttpError("삭제할 장소가 없습니다.", 404)
     }
 
     // DUMMY_PLACES 배열에서 해당 ID와 일치하지 않는 장소들로 새로운 배열을 생성하여 할당합니다.
