@@ -6,7 +6,9 @@ const { validationResult } = require('express-validator');
 const HttpError = require('../models/http-error');
 const getCoordsForAddress = require('../util/location');
 const Place = require('../models/places');
-const places = require('../models/places');
+const User = require('../models/user');
+const { default: mongoose } = require('mongoose');
+
 
 // 더미 데이터로 사용할 장소 정보를 정의합니다.
 let DUMMY_PLACES = [
@@ -108,22 +110,28 @@ const getPlaceByUserId = async (req, res, next) => {
 
 
 const createPlace = async (req, res, next) => {
-    const errors = validationResult(req); // express-validator를 사용하여 요청의 유효성을 검사합니다.
+    // express-validator를 사용하여 요청의 유효성을 검사합니다.
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log(errors);
-        next(new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422)); // 에러가 배열로 나와서 첫 번째 인덱스의 경로를 사용하여 클라이언트에게 에러를 전달합니다.
+        // 에러가 배열로 나와서 첫 번째 인덱스의 경로를 사용하여 클라이언트에게 에러를 전달합니다.
+        next(new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422));
     }
 
-    const { title, description, address, creator } = req.body; // 요청에서 필요한 데이터를 추출합니다.
+    // 요청에서 필요한 데이터를 추출합니다.
+    const { title, description, address, creator } = req.body;
 
     let coordinates;
 
     try {
-        coordinates = await getCoordsForAddress(address); // 주소를 좌표로 변환하는 유틸리티 함수를 사용하여 좌표를 얻습니다.
+        // 주소를 좌표로 변환하는 유틸리티 함수를 사용하여 좌표를 얻습니다.
+        coordinates = await getCoordsForAddress(address);
     } catch (error) {
-        return next(error); // 좌표 얻기가 실패하면 에러를 핸들링하여 다음 미들웨어로 전달합니다.
+        // 좌표 얻기가 실패하면 에러를 핸들링하여 다음 미들웨어로 전달합니다.
+        return next(error);
     }
 
+    // 새로운 장소 객체를 생성합니다.
     const createPlace = new Place({
         title,
         description,
@@ -133,60 +141,98 @@ const createPlace = async (req, res, next) => {
         creator
     });
 
+    let user;
     try {
-        await createPlace.save(); // 새로운 장소를 MongoDB에 저장합니다.
+        // 생성자(creator) ID를 사용하여 해당 사용자를 데이터베이스에서 찾습니다.
+        user = await User.findById(creator);
     } catch (err) {
-        const error = new HttpError("새 장소 추가 실패", 500); // 저장 중에 에러가 발생하면 500 상태 코드와 함께 에러를 생성합니다.
-        return next(error); // 에러를 핸들링하여 다음 미들웨어로 전달합니다.
+        const error = new HttpError('새로운 장소 추가에 실패 했습니다', 500);
+        return next(error);
     }
 
-    res.status(201).json({ place: createPlace }); // 클라이언트에게 성공적인 응답을 전송합니다.
-}
+    // 찾은 사용자가 없을 경우 에러를 생성하여 핸들링합니다.
+    if (!user) {
+        const error = new HttpError("제공된 ID의 유저를 찾을 수 없습니다", 404);
+        return next(error);
+    }
 
-const updatePlaceById = (req, res, next) => {
+    try {
+        // Mongoose 세션을 시작하고 트랜잭션을 시작합니다.
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+
+        // 새로운 장소를 데이터베이스에 저장합니다.
+        await createPlace.save({ session: sess });
+
+        // 사용자 문서에 새로운 장소의 ID를 추가합니다.
+        user.places.push(createPlace);
+        await user.save({ session: sess });
+
+        // 트랜잭션을 커밋합니다.
+        await sess.commitTransaction();
+    } catch (err) {
+        console.log(err);
+        const error = new HttpError("새 장소 추가 실패", 500);
+        // 저장 중에 에러가 발생하면 500 상태 코드와 함께 에러를 생성합니다.
+        return next(error);
+    }
+
+    // 클라이언트에게 성공적인 응답을 전송합니다.
+    res.status(201).json({ place: createPlace });
+};
+
+const updatePlaceById = async (req, res, next) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log(errors)
-        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
+        throw new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422)
     }
     // 요청에서 필요한 데이터를 추출합니다.
     const { title, description } = req.body;
     const placeId = req.params.pid;
 
-    // DUMMY_PLACES 배열에서 해당 ID와 일치하는 장소를 찾아 복제합니다.
-    const updatePlace = { ...DUMMY_PLACES.find(p => p.id === placeId) };
-
-    // DUMMY_PLACES 배열에서 해당 장소의 인덱스를 찾습니다.
-    const placeIndex = DUMMY_PLACES.findIndex(p => p.id === placeId);
-
-    // 복제한 장소 정보를 업데이트합니다.
-    updatePlace.title = title; // 원시값이기 때문에 직접 수정이 가능합니다.
-    updatePlace.description = description;
-
-    // DUMMY_PLACES 배열에서 업데이트된 장소 정보를 저장합니다.
-    DUMMY_PLACES[placeIndex] = updatePlace;
-
-    // 클라이언트에게 업데이트된 장소 정보를 응답합니다.
-    res.status(200).json({ place: updatePlace });
-}
-
-
-
-const deletePlaceById = (req, res, next) => {
-    // 요청 파라미터에서 장소 ID를 추출합니다.
-    const placeId = req.params.pid;
-
-    if (!DUMMY_PLACES.find(p => p.id === placeId)) {
-        throw new HttpError("삭제할 장소가 없습니다.", 404)
+    let place;
+    try {
+        place = await Place.findById(placeId)
+    } catch (err) {
+        const error = new HttpError("업데이트 실패", 500)
+        return next(error);
     }
 
-    // DUMMY_PLACES 배열에서 해당 ID와 일치하지 않는 장소들로 새로운 배열을 생성하여 할당합니다.
-    DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId);
+    place.title = title;
+    place.description = description;
 
-    // 클라이언트에게 성공적인 삭제를 알리는 응답을 전송합니다.
-    res.status(200).json({ message: '삭제 성공' });
+    try {
+        await place.save();
+    } catch (err) {
+        const error = new HttpError("문제가 발생하였습니다 업데이트 할 수 없습니다", 500)
+        return next(error);
+    }
+
+    // 클라이언트에게 업데이트된 장소 정보를 응답합니다.
+    res.status(200).json({ place: place });
 }
+
+
+
+const deletePlaceById = async (req, res, next) => {
+    const placeId = req.params.pid;
+
+    try {
+        const place = await Place.findById(placeId);
+
+        if (!place) {
+            throw new HttpError("유효한 장소 아이디를 찾지 못했습니다", 404);
+        }
+
+        await place.deleteOne();
+        res.status(200).json({ message: '삭제 성공' });
+    } catch (err) {
+        const error = err.code === 404 ? err : new HttpError("삭제에 실패했습니다", 500);
+        return next(error);
+    }
+};
 
 
 // 외부에서 사용할 수 있도록 함수를 내보냅니다.
