@@ -10,24 +10,26 @@ import Auth from './user/pages/Auth';
 import { AuthContext } from './shared/context/auth-context';
 
 const App = () => {
-
+  // 로그인 상태와 사용자 ID를 관리하는 상태
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-  const login = useCallback(() => {
-
+  // useCallback을 사용한 로그인 함수
+  const login = useCallback((userId) => {
     setIsLoggedIn(true);
+    setUserId(userId);
+  }, []);
 
-  }, []) // [] 재생성이 필요없음
-
+  // useCallback을 사용한 로그아웃 함수
   const logout = useCallback(() => {
-
     setIsLoggedIn(false);
+    setUserId(null);
+  }, []);
 
-  }, []) // [] 재생성이 필요없음
-
+  // 라우팅을 위한 JSX 설정
   let routes;
-
   if (isLoggedIn) {
+    // 로그인한 경우의 라우트 설정
     routes = (
       <>
         <Route path='/' element={<Users />} />
@@ -38,6 +40,7 @@ const App = () => {
       </>
     );
   } else {
+    // 로그인하지 않은 경우의 라우트 설정
     routes = (
       <>
         <Route path='/' element={<Users />} />
@@ -48,12 +51,23 @@ const App = () => {
     );
   }
 
-
+  // AuthContext.Provider를 사용하여 전역적으로 사용되는 사용자 정보 관리
   return (
-    <AuthContext.Provider value={{ isLoggedIn: isLoggedIn, login: login, logout: logout }}>
+    <AuthContext.Provider 
+      value={{ 
+        isLoggedIn: isLoggedIn, 
+        userId: userId, 
+        login: login, 
+        logout: logout 
+      }}
+    >
       <>
+        {/* 상단 네비게이션 바 */}
         <MainNavigation />
+
+        {/* 메인 컨텐츠 영역 */}
         <main>
+          {/* 라우트 설정 */}
           <Routes>
             {routes}
           </Routes>

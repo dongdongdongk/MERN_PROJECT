@@ -30,6 +30,7 @@ export const useHttpClient = () => {
             // 서버로부터 받은 응답을 JSON 형태로 파싱
             const responseData = await response.json();
 
+            // 리스트를 깔끔하게 유지하기 위해 사용되는 코드
             activeHttpRequests.current = activeHttpRequests.current.filter(reqCtrl => reqCtrl !== httpAbortController)
 
             // 응답이 성공적이지 않으면 에러를 던짐

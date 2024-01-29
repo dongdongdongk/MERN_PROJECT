@@ -17,7 +17,9 @@ import { AuthContext } from "../../shared/context/auth-context";
 import './Auth.css';
 
 const Auth = () => {
-    const auth = useContext(AuthContext)
+    const auth = useContext(AuthContext);
+
+    // 로그인 및 회원 가입을 위한 상태 및 커스텀 훅 초기화
     const [isLoginMode, setIsLoginMode] = useState(true);
     const { isLoading, error, sendRequest, clearError } = useHttpClient();
     const [formState, inputHandler, setFormData] = useForm({
@@ -29,12 +31,12 @@ const Auth = () => {
             value: '',
             isValid: false
         },
-    },
-        false
-    )
+    }, false);
 
+    // 로그인 및 회원 가입 모드 전환
     const switchModeHandler = () => {
         if (!isLoginMode) {
+            // 회원 가입 모드에서 로그인 모드로 전환 시, 이름 입력 필드 추가
             setFormData(
                 {
                     ...formState.inputs,
@@ -43,6 +45,7 @@ const Auth = () => {
                 formState.inputs.email.isValid && formState.inputs.password.isValid
             );
         } else {
+            // 로그인 모드에서 회원 가입 모드로 전환 시, 이름 입력 필드 제거
             setFormData(
                 {
                     ...formState.inputs,
@@ -57,13 +60,14 @@ const Auth = () => {
         setIsLoginMode(prevMode => !prevMode);
     };
 
+    // 로그인 또는 회원 가입 시도
     const authSubmitHandler = async (event) => {
         event.preventDefault();
 
         if (isLoginMode) {
-
+            // 로그인 모드일 때
             try {
-                await sendRequest(
+                const responseData = await sendRequest(
                     'http://localhost:5000/api/users/login',
                     'POST',
                     JSON.stringify({
@@ -74,16 +78,17 @@ const Auth = () => {
                         'Content-Type': 'application/json'
                     }
                 );
-                auth.login();
-
+                auth.login(responseData.user._id);
             } catch (error) {
-
+                // 오류 발생 시
             }
         } else {
+            // 회원 가입 모드일 때
             try {
-                await sendRequest(
+                const responseData = await sendRequest(
                     'http://localhost:5000/api/users/signup',
-                    'POST', JSON.stringify({
+                    'POST',
+                    JSON.stringify({
                         name: formState.inputs.name.value,
                         email: formState.inputs.email.value,
                         password: formState.inputs.password.value
@@ -92,22 +97,27 @@ const Auth = () => {
                         'Content-Type': 'application/json'
                     }
                 );
-                auth.login();
+                auth.login(responseData.user._id);
             } catch (error) {
-
+                // 오류 발생 시
             }
         }
-    }
+    };
 
     return (
         <>
-            <ErrorModal error={error} onClear={clearError} /> 
-            {/* 커스텀 훅에서 가져온 clearError */}
+            {/* HTTP 요청 오류를 표시하는 모달 및 로딩 스피너 */}
+            <ErrorModal error={error} onClear={clearError} />
+            {isLoading && <LoadingSpinner asOverlay />}
+
+            {/* 로그인/회원 가입 양식 */}
             <Card className="authentication">
-                {isLoading && <LoadingSpinner asOverlay />}
                 <h1>Login Required</h1>
                 <hr />
+
+                {/* 로그인/회원 가입 양식 */}
                 <form onSubmit={authSubmitHandler}>
+                    {/* 회원 가입 모드에서만 보이는 이름 입력 필드 */}
                     {!isLoginMode && (
                         <Input
                             element='input'
@@ -119,6 +129,8 @@ const Auth = () => {
                             onInput={inputHandler}
                         />
                     )}
+
+                    {/* 이메일 및 비밀번호 입력 필드 */}
                     <Input
                         element='input'
                         id='email'
@@ -137,15 +149,20 @@ const Auth = () => {
                         errorText="Please enter a valid password at least 5 Ch."
                         onInput={inputHandler}
                     />
-                    <Button type="submit" disabled={!formState.isValid}>{isLoginMode ? 'LOGIN' : 'SIGNUP'}</Button>
+
+                    {/* 로그인/회원 가입 버튼 */}
+                    <Button type="submit" disabled={!formState.isValid}>
+                        {isLoginMode ? 'LOGIN' : 'SIGNUP'}
+                    </Button>
                 </form>
-                <Button inverse onClick={switchModeHandler}>SWITCH TO {isLoginMode ? 'SIGNUP' : 'LOGIN'}</Button>
+
+                {/* 로그인/회원 가입 모드 전환 버튼 */}
+                <Button inverse onClick={switchModeHandler}>
+                    SWITCH TO {isLoginMode ? 'SIGNUP' : 'LOGIN'}
+                </Button>
             </Card>
         </>
-
-
     )
-
 }
 
 export default Auth;

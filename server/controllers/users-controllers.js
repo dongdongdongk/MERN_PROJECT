@@ -80,7 +80,7 @@ const login = async (req, res, next) => {
     }
 
     // 5. 로그인이 성공한 경우, 성공 메시지를 JSON 형태로 응답
-    res.json({ message: '로그인 성공' });
+    res.json({ message: '로그인 성공', user : existingUser });
 }
 
 
