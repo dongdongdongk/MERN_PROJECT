@@ -9,48 +9,6 @@ const Place = require('../models/places');
 const User = require('../models/user');
 const { default: mongoose } = require('mongoose');
 
-
-// 더미 데이터로 사용할 장소 정보를 정의합니다.
-let DUMMY_PLACES = [
-    {
-        id: 'p1',
-        title: 'Empire',
-        description: 'One of the famous',
-        imageUrl: 'https://blog.btcc.com/wp-content/uploads/2022/10/2022102705575983912_1666817880.png',
-        address: '무학공원',
-        location: {
-            lat: 35.824981,
-            lng: 128.639735
-        },
-        creator: 'u1'
-    },
-    {
-        id: 'p1',
-        title: '지산 222',
-        description: 'One of the famous44444',
-        imageUrl: 'https://blog.btcc.com/wp-content/uploads/2022/10/2022102705575983912_1666817880.png',
-        address: '지산공원',
-        location: {
-            lat: 35.824981,
-            lng: 128.639735
-        },
-        creator: 'u1'
-    },
-    {
-        id: 'p2',
-        title: 'Empire',
-        description: 'One of the famous',
-        imageUrl: 'https://blog.btcc.com/wp-content/uploads/2022/10/2022102705575983912_1666817880.png',
-        address: '무학공원',
-        location: {
-            lat: 35.824981,
-            lng: 128.639735
-        },
-        creator: 'u2'
-    }
-]
-
-
 // 특정 장소 ID에 대한 정보를 반환하는 함수입니다.
 const getPlacesById = async (req, res, next) => {
     // 요청 파라미터에서 장소 ID를 추출합니다.
@@ -88,23 +46,24 @@ const getPlaceByUserId = async (req, res, next) => {
     // 요청 파라미터에서 사용자 ID를 추출합니다.
     const userId = req.params.uid;
 
-    let place;
+    // let place;
+    let userWithPlaces
     try {
-        place = await Place.find({ creator: userId })
+        userWithPlaces = await User.findById(userId).populate('places')
     } catch (err) {
         const error = new HttpError("장소를 불러오는데 실패했습니다", 500)
         return next(error)
     }
 
     // 만약 사용자를 찾지 못했다면 HttpError를 발생시킵니다.
-    if (!place || place.length === 0) {
+    if (!userWithPlaces || userWithPlaces.places.length === 0) {
         return next(
             new HttpError('유저를 찾을 수 없습니다', 404)
         );
     }
 
     // 찾은 장소를 JSON 형태로 응답합니다.
-    res.json({ place: place.map(place => place.toObject({ getters: true })) });
+    res.json({ places: userWithPlaces.places.map(place => place.toObject({ getters: true })) });
 };
 
 
@@ -217,21 +176,49 @@ const updatePlaceById = async (req, res, next) => {
 
 
 const deletePlaceById = async (req, res, next) => {
+    // 요청 파라미터에서 장소의 ID를 가져옵니다.
     const placeId = req.params.pid;
+    let place;
 
+    // 장소를 찾아서 해당 ID로 검색한 결과를 가져옵니다.
     try {
-        const place = await Place.findById(placeId);
-
-        if (!place) {
-            throw new HttpError("유효한 장소 아이디를 찾지 못했습니다", 404);
-        }
-
-        await place.deleteOne();
-        res.status(200).json({ message: '삭제 성공' });
+        place = await Place.findById(placeId).populate('creator');
     } catch (err) {
-        const error = err.code === 404 ? err : new HttpError("삭제에 실패했습니다", 500);
+        // 에러가 발생하면 500 상태 코드와 함께 에러 메시지를 반환합니다.
+        const error = new HttpError("문제발생 삭제에 실패했습니다", 500);
         return next(error);
     }
+
+    // 검색된 장소가 없으면 404 상태 코드와 함께 에러 메시지를 반환합니다.
+    if (!place) {
+        const error = new HttpError("장소 id 를 찾지 못하였습니다", 404);
+        return next(error);
+    }
+
+    // MongoDB 세션을 사용하여 트랜잭션을 시작합니다.
+    try {
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+
+        // 검색된 장소를 삭제합니다.
+        await place.deleteOne({ session: sess });
+
+        // 해당 장소를 생성한 사용자의 데이터에서 해당 장소를 제거합니다.
+        place.creator.places.pull(place);
+
+        // 수정된 사용자 데이터를 저장합니다.
+        await place.creator.save({ session: sess })
+
+        // 트랜잭션을 커밋하여 변경 사항을 영구적으로 반영합니다.
+        await sess.commitTransaction();
+    } catch (err) {
+        // 트랜잭션 도중 에러가 발생하면 500 상태 코드와 함께 에러 메시지를 반환합니다.
+        const error = new HttpError('삭제에 실패했습니다', 500);
+        return next(error)
+    }
+
+    // 모든 작업이 성공적으로 완료되면 200 상태 코드와 함께 성공 메시지를 반환합니다.
+    res.status(200).json({ message: '삭제성공' });
 };
 
 

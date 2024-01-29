@@ -12,9 +12,18 @@ app.use(express.json()); // 본문 라우터 위에 있어야 한다 순서대�
 app.use(express.urlencoded({ extended: true }));
 
 
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    );
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
 
+    next();
+});
 
-app.use('/api/places',placesRoutes); // => /api/places/ 로 시작하는 요청 라우팅
+app.use('/api/places', placesRoutes); // => /api/places/ 로 시작하는 요청 라우팅
 app.use('/api/users', usersRoutes);
 
 // 에러 핸들링 미들웨어: 요청이 들어올 때 항상 실행되는 미들웨어입니다.
@@ -39,7 +48,7 @@ app.use((error, req, res, next) => {
 });
 
 // MongoDB 서버에 연결
-mongoose.connect('mongodb+srv://dhk9309:kim1458@cluster0.ckluwao.mongodb.net/places?retryWrites=true&w=majority')
+mongoose.connect('mongodb+srv://dhk9309:kim1458@cluster0.ckluwao.mongodb.net/mern?retryWrites=true&w=majority')
     .then(() => {
         console.log("데이터 베이스 연결 성공");
     })
