@@ -9,7 +9,7 @@ const getUsers = async (req, res, next) => {
     try {
         users = await User.find({}, '-password'); // - 는 제외하고 password 제외하고 불러오기 
     } catch (err) {
-        const error = HttpError("유저 정보를 불러오지 못했습니다", 500);
+        const error = new HttpError("유저 정보를 불러오지 못했습니다", 500);
         return next(error)
     }
     res.json(users)
