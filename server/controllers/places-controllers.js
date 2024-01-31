@@ -57,7 +57,7 @@ const getPlaceByUserId = async (req, res, next) => {
     }
 
     // 만약 사용자를 찾지 못했다면 HttpError를 발생시킵니다.
-    if (!userWithPlaces || userWithPlaces.places.length === 0) {
+    if (!userWithPlaces) {
         return next(
             new HttpError('유저를 찾을 수 없습니다', 404)
         );

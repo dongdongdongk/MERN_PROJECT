@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-
+import { useNavigate } from "react-router-dom";
 import Card from "../../shared/components/UIElements/Card";
 import Input from "../../shared/components/FormElements/Input";
 import Button from "../../shared/components/FormElements/Button";
@@ -20,7 +20,7 @@ import './Auth.css';
 
 const Auth = () => {
     const auth = useContext(AuthContext);
-
+    const navigate = useNavigate();
     // 로그인 및 회원 가입을 위한 상태 및 커스텀 훅 초기화
     const [isLoginMode, setIsLoginMode] = useState(true);
     const { isLoading, error, sendRequest, clearError } = useHttpClient();
@@ -85,9 +85,12 @@ const Auth = () => {
                         'Content-Type': 'application/json'
                     }
                 );
-                auth.login(responseData.user._id);
+                console.log(responseData)
+                auth.login(responseData.userId);
+                navigate('/');
             } catch (error) {
                 // 오류 발생 시
+                console.error("Login Error:", error);
             }
         } else {
             // 회원 가입 모드일 때
@@ -103,7 +106,8 @@ const Auth = () => {
                     'POST',
                     formData
                 );
-                auth.login(responseData.user._id);
+                auth.login(responseData.userId);
+                navigate('/');
             } catch (error) {
                 // 오류 발생 시
             }
