@@ -20,6 +20,7 @@ const signup = async (req, res, next) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+
         const error = new HttpError(`${errors.errors[0].path}는 비어있을 수 없습니다`, 422) // 에러가 배열로 나와서 처번째 인덱스만 출력했다 나중에 수정이 필요할듯
         return next(error);
     }
@@ -42,7 +43,7 @@ const signup = async (req, res, next) => {
     const createdUser = new User({
         name,
         email,
-        image: 'https://cdn.coindeskkorea.com//news/photo/202102/72702_10249_4844.jpg',
+        image: req.file.path,
         password,
         places : []
     })

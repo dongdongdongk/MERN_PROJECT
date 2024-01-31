@@ -5,6 +5,8 @@ import Input from "../../shared/components/FormElements/Input";
 import Button from "../../shared/components/FormElements/Button";
 import ErrorModal from "../../shared/components/UIElements/ErrorModal"
 import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner"
+import ImageUpload from "../../shared/components/FormElements/ImageUpload";
+
 import { useForm } from "../../shared/hooks/form-hook";
 import { useHttpClient } from "../../shared/hooks/http-hook";
 import {
@@ -40,7 +42,8 @@ const Auth = () => {
             setFormData(
                 {
                     ...formState.inputs,
-                    name: undefined
+                    name: undefined,
+                    image : undefined
                 },
                 formState.inputs.email.isValid && formState.inputs.password.isValid
             );
@@ -52,6 +55,10 @@ const Auth = () => {
                     name: {
                         value: '',
                         isValid: false
+                    },
+                    image : {
+                        value : null,
+                        isValid : false
                     }
                 },
                 false
@@ -85,17 +92,16 @@ const Auth = () => {
         } else {
             // 회원 가입 모드일 때
             try {
+                const formData = new FormData();
+                formData.append('name',formState.inputs.name.value)
+                formData.append('email',formState.inputs.email.value)
+                formData.append('password',formState.inputs.password.value)
+                formData.append('image',formState.inputs.image.value)
+
                 const responseData = await sendRequest(
                     'http://localhost:5000/api/users/signup',
                     'POST',
-                    JSON.stringify({
-                        name: formState.inputs.name.value,
-                        email: formState.inputs.email.value,
-                        password: formState.inputs.password.value
-                    }),
-                    {
-                        'Content-Type': 'application/json'
-                    }
+                    formData
                 );
                 auth.login(responseData.user._id);
             } catch (error) {
@@ -129,6 +135,7 @@ const Auth = () => {
                             onInput={inputHandler}
                         />
                     )}
+                    {!isLoginMode && <ImageUpload center id="image" onInput={inputHandler}/>}
 
                     {/* 이메일 및 비밀번호 입력 필드 */}
                     <Input
