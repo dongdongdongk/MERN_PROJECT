@@ -1,5 +1,6 @@
 const { v4: uuid } = require('uuid');
 const { validationResult } = require('express-validator');
+const fs = require('fs');
 
 
 // HttpError 모델을 불러와 사용합니다.
@@ -96,7 +97,7 @@ const createPlace = async (req, res, next) => {
         description,
         address,
         location: coordinates, // 얻은 좌표 정보를 사용하여 새로운 장소의 위치를 설정합니다.
-        image: 'https://cdn.coindeskkorea.com//news/photo/202102/72702_10249_4844.jpg', // 임시 이미지 URL을 설정합니다.
+        image: req.file.path,
         creator
     });
 
@@ -195,6 +196,9 @@ const deletePlaceById = async (req, res, next) => {
         return next(error);
     }
 
+    // 이미지 주소 가져오기 (req.file.path 로 이미지 주소 들어가 있음)
+    const imagePath = place.image;
+
     // MongoDB 세션을 사용하여 트랜잭션을 시작합니다.
     try {
         const sess = await mongoose.startSession();
@@ -216,6 +220,10 @@ const deletePlaceById = async (req, res, next) => {
         const error = new HttpError('삭제에 실패했습니다', 500);
         return next(error)
     }
+
+    fs.unlink(imagePath, err => {
+        console.log(err);
+    });
 
     // 모든 작업이 성공적으로 완료되면 200 상태 코드와 함께 성공 메시지를 반환합니다.
     res.status(200).json({ message: '삭제성공' });

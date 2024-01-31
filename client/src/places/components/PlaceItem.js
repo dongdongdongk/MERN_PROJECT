@@ -99,7 +99,7 @@ const PlaceItem = (props) => {
 
                     {/* 장소 이미지 */}
                     <div className="place-item__image">
-                        <img src={props.image} alt={props.title} />
+                        <img src={`http://localhost:5000/${props.image}`} alt={props.title} />
                     </div>
 
                     {/* 장소 정보 */}

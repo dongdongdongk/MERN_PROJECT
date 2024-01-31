@@ -11,6 +11,9 @@ const placeControllers = require('../controllers/places-controllers');
 // Express의 Router를 사용하여 새로운 라우터를 생성합니다.
 const router = express.Router();
 
+// 파일 업로드 미들웨어를 가져옵니다.
+const fileUpload = require('../middleware/file-upload');
+
 // /api/places/:pid 라우트를 처리하는 미들웨어 함수입니다.
 // 해당 라우트로 들어오는 GET 요청에 대해 placeControllers.getPlaceById 함수를 실행합니다.
 router.get('/:pid', placeControllers.getPlacesById);
@@ -21,6 +24,8 @@ router.get('/user/:uid', placeControllers.getPlaceByUserId);
 
 // 추가 
 router.post('/',
+    fileUpload.single('image'),
+
     [
         check('title')
             .not()
