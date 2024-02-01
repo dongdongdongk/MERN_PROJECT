@@ -11,24 +11,24 @@ import { AuthContext } from './shared/context/auth-context';
 
 const App = () => {
   // 로그인 상태와 사용자 ID를 관리하는 상태
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState(false);
   const [userId, setUserId] = useState(null);
 
   // useCallback을 사용한 로그인 함수
-  const login = useCallback((userId) => {
-    setIsLoggedIn(true);
+  const login = useCallback((userId,token) => {
+    setToken(token);
     setUserId(userId);
   }, []);
 
   // useCallback을 사용한 로그아웃 함수
   const logout = useCallback(() => {
-    setIsLoggedIn(false);
+    setToken(null);
     setUserId(null);
   }, []);
 
   // 라우팅을 위한 JSX 설정
   let routes;
-  if (isLoggedIn) {
+  if (token) {
     // 로그인한 경우의 라우트 설정
     routes = (
       <>
@@ -55,7 +55,8 @@ const App = () => {
   return (
     <AuthContext.Provider 
       value={{ 
-        isLoggedIn: isLoggedIn, 
+        isLoggedIn: !!token, 
+        token : token,
         userId: userId, 
         login: login, 
         logout: logout 

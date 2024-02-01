@@ -86,7 +86,7 @@ const Auth = () => {
                     }
                 );
                 console.log(responseData)
-                auth.login(responseData.userId);
+                auth.login(responseData.userId, responseData.token);
                 navigate('/');
             } catch (error) {
                 // 오류 발생 시
@@ -106,7 +106,7 @@ const Auth = () => {
                     'POST',
                     formData
                 );
-                auth.login(responseData.userId);
+                auth.login(responseData.userId, responseData.token);
                 navigate('/');
             } catch (error) {
                 // 오류 발생 시
