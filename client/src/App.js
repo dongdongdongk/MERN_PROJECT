@@ -10,7 +10,7 @@ import Auth from './user/pages/Auth';
 import { AuthContext } from './shared/context/auth-context';
 
 const App = () => {
-  // 로그인 상태와 사용자 ID를 관리하는 상태
+
   const [token, setToken] = useState(false);
   const [userId, setUserId] = useState(null);
 

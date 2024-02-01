@@ -52,7 +52,7 @@ const UpdatePlace = () => {
       try {
         // sendRequest 함수를 사용하여 특정 장소의 데이터 가져오기
         const responseData = await sendRequest(`http://localhost:5000/api/places/${placeId}`);
-        
+
         // 가져온 데이터로 loadedPlaces state 업데이트
         setLoadedPlaces(responseData.places);
 
@@ -84,12 +84,16 @@ const UpdatePlace = () => {
     event.preventDefault();
     try {
       // sendRequest 함수를 사용하여 장소 업데이트 요청 보내기
-      await sendRequest(`http://localhost:5000/api/places/${placeId}`, 'PATCH', JSON.stringify({
-        title: formState.inputs.title.value,
-        description: formState.inputs.description.value
-      }),
+      await sendRequest(
+        `http://localhost:5000/api/places/${placeId}`,
+        'PATCH',
+        JSON.stringify({
+          title: formState.inputs.title.value,
+          description: formState.inputs.description.value
+        }),
         {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization : 'Bearer ' +  auth.token
         }
       );
 

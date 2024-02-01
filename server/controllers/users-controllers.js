@@ -134,11 +134,11 @@ const login = async (req, res, next) => {
             { userId: existingUser._id, email: existingUser.email },
             'secretKey',
             { expiresIn: '1h' }
-        );
-    } catch (err) {
-        const error = new HttpError("토큰 생성에 실패하였습니다", 500);
-        return next(error);
-    }
+            );
+        } catch (err) {
+            const error = new HttpError("토큰 생성에 실패하였습니다", 500);
+            return next(error);
+        }
 
 
     // 로그인 성공 시, 성공 메시지와 사용자 정보를 JSON 형태로 응답

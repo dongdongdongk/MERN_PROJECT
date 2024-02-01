@@ -46,7 +46,15 @@ const PlaceItem = (props) => {
         setShowConfirmModal(false);
         try {
             // 서버에 DELETE 요청을 보냄
-            await sendRequest(`http://localhost:5000/api/places/${props.id}`, 'DELETE');
+            await sendRequest(
+                `http://localhost:5000/api/places/${props.id}`,
+                'DELETE',
+                null,
+                {
+                    Authorization : 'Bearer ' + auth.token
+                }
+
+            );
         } catch (error) {
             // 에러 발생 시 아무 동작 없음 (추가 로직 필요)
         }

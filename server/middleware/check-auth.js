@@ -3,8 +3,13 @@ const HttpError = require("../models/http-error");
 
 // 토큰 검증 미들웨어
 module.exports = (req, res, next) => {
+    
+    if(req.method === 'OPTIONS') {
+        return next();
+    }
+    
     // 1. 요청 헤더에서 토큰 추출
-    const token = req.headers.authorization.split(' '[1]);
+    const token = req.headers.authorization.split(' ')[1];
 
     try {
         // 2. 토큰이 존재하지 않으면 에러 발생
