@@ -58,7 +58,7 @@ app.use((error, req, res, next) => {
 });
 
 // MongoDB 서버에 연결
-mongoose.connect('mongodb+srv://dhk9309:kim1458@cluster0.ckluwao.mongodb.net/mern?retryWrites=true&w=majority')
+mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ckluwao.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
     .then(() => {
         console.log("데이터 베이스 연결 성공");
     })

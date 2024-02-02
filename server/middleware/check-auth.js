@@ -18,7 +18,7 @@ module.exports = (req, res, next) => {
         }
 
         // 3. 토큰 검증
-        const decodedToken = jwt.verify(token, 'secretKey');
+        const decodedToken = jwt.verify(token, process.env.JWT_KEY);
 
         // 4. 검증이 성공하면 사용자 데이터를 요청 객체에 추가
         req.userData = { userId: decodedToken.userId };

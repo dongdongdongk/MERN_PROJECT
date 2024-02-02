@@ -79,7 +79,7 @@ const createPlace = async (req, res, next) => {
     }
 
     // 요청에서 필요한 데이터를 추출합니다.
-    const { title, description, address, creator } = req.body;
+    const { title, description, address } = req.body;
 
     let coordinates;
 
@@ -98,13 +98,13 @@ const createPlace = async (req, res, next) => {
         address,
         location: coordinates, // 얻은 좌표 정보를 사용하여 새로운 장소의 위치를 설정합니다.
         image: req.file.path,
-        creator
+        creator : req.userData.userId
     });
 
     let user;
     try {
         // 생성자(creator) ID를 사용하여 해당 사용자를 데이터베이스에서 찾습니다.
-        user = await User.findById(creator);
+        user = await User.findById(req.userData.userId);
     } catch (err) {
         const error = new HttpError('새로운 장소 추가에 실패 했습니다', 500);
         return next(error);
