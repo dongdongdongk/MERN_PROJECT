@@ -26,8 +26,8 @@ module.exports = (req, res, next) => {
         // 5. 다음 미들웨어로 진행
         next();
     } catch (err) {
-        // 6. 토큰 검증 실패 시 401 상태코드와 함께 에러 응답
-        const error = new HttpError("인증 실패", 401);
+        // 6. 토큰 검증 실패 시 403 상태코드와 함께 에러 응답
+        const error = new HttpError("인증 실패", 403);
         return next(error);
     }
 };

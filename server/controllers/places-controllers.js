@@ -160,6 +160,11 @@ const updatePlaceById = async (req, res, next) => {
         return next(error);
     }
 
+    if(place.creator.toString !== req.userData.userId) {
+        const error = new HttpError("장소를 수정할 권한이 없습니다.", 401)
+        return next(error);
+    }
+
     place.title = title;
     place.description = description;
 
@@ -193,6 +198,11 @@ const deletePlaceById = async (req, res, next) => {
     // 검색된 장소가 없으면 404 상태 코드와 함께 에러 메시지를 반환합니다.
     if (!place) {
         const error = new HttpError("장소 id 를 찾지 못하였습니다", 404);
+        return next(error);
+    }
+
+    if(place.creator.id !== req.userData.userId) {
+        const error = new HttpError("장소를 삭제할 권한이 없습니다.", 401)
         return next(error);
     }
 

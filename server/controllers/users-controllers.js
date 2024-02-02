@@ -107,8 +107,8 @@ const login = async (req, res, next) => {
     }
 
     if (!existingUser) {
-        // 사용자가 없거나 비밀번호가 일치하지 않을 경우, 401 상태코드로 에러 응답
-        const error = new HttpError("유저 정보가 틀립니다", 401);
+        // 사용자가 없거나 비밀번호가 일치하지 않을 경우, 403 상태코드로 에러 응답
+        const error = new HttpError("유저 정보가 틀립니다", 403);
         return next(error);
     }
 
