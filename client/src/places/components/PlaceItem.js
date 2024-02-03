@@ -47,7 +47,7 @@ const PlaceItem = (props) => {
         try {
             // 서버에 DELETE 요청을 보냄
             await sendRequest(
-                `http://localhost:5000/api/places/${props.id}`,
+                process.env.REACT_APP_BACKEND_URL + `/places/${props.id}`,
                 'DELETE',
                 null,
                 {
@@ -107,7 +107,7 @@ const PlaceItem = (props) => {
 
                     {/* 장소 이미지 */}
                     <div className="place-item__image">
-                        <img src={`http://localhost:5000/${props.image}`} alt={props.title} />
+                        <img src={`${process.env.REACT_APP_ASSET_URL}/${props.image}`} alt={props.title} />
                     </div>
 
                     {/* 장소 정보 */}

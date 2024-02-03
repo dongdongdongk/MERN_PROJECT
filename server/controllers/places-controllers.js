@@ -160,7 +160,9 @@ const updatePlaceById = async (req, res, next) => {
         return next(error);
     }
 
-    if(place.creator.toString !== req.userData.userId) {
+    if(place.creator.toString() !== req.userData.userId) {
+        console.log(place.creator)
+        console.log(req.userData.userId)
         const error = new HttpError("장소를 수정할 권한이 없습니다.", 401)
         return next(error);
     }

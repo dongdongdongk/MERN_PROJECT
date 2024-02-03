@@ -1,18 +1,24 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import './App.css';
 import { Route, Routes, Navigate } from 'react-router-dom'
-import Users from './user/pages/Users';
-import NewPlace from './places/pages/NewPlace';
+// import Users from './user/pages/Users';
+// import NewPlace from './places/pages/NewPlace';
+// import UpdatePlace from './places/pages/UpdatePlace';
+// import UserPlaces from './places/pages/UserPlaces';
+// import Auth from './user/pages/Auth';
 import MainNavigation from './shared/components/Navigation/MainNavigation';
-import UserPlaces from './places/pages/UserPlaces';
-import UpdatePlace from './places/pages/UpdatePlace';
-import Auth from './user/pages/Auth';
 import { AuthContext } from './shared/context/auth-context';
 import useAuth from './shared/hooks/auth-hook';
+import LoadingSpinner from './shared/components/UIElements/LoadingSpinner';
 
+const Users = React.lazy(() => import('./user/pages/Users')) // 첫 페이지기 때문에 lazy 로딩이 필요없다 
+const NewPlace = React.lazy(() => import('./shared/components/Navigation/MainNavigation'))
+const UpdatePlace = React.lazy(() => import('./places/pages/UpdatePlace'))
+const UserPlaces = React.lazy(() => import('./places/pages/UserPlaces'))
+const Auth = React.lazy(() => import('./user/pages/Auth'))
 
 const App = () => {
-  const {token, login, logout, userId} = useAuth()
+  const { token, login, logout, userId } = useAuth()
 
   // 라우팅을 위한 JSX 설정
   let routes;
@@ -56,10 +62,16 @@ const App = () => {
 
         {/* 메인 컨텐츠 영역 */}
         <main>
-          {/* 라우트 설정 */}
-          <Routes>
-            {routes}
-          </Routes>
+          <Suspense fallback={
+            <div className='center'>
+              <LoadingSpinner/>
+            </div>
+          }>
+            {/* 라우트 설정 */}
+            <Routes>
+              {routes}
+            </Routes>
+          </Suspense>
         </main>
       </>
     </AuthContext.Provider>

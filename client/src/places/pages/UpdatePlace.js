@@ -51,7 +51,7 @@ const UpdatePlace = () => {
     const fetchPlaces = async () => {
       try {
         // sendRequest 함수를 사용하여 특정 장소의 데이터 가져오기
-        const responseData = await sendRequest(`http://localhost:5000/api/places/${placeId}`);
+        const responseData = await sendRequest(process.env.REACT_APP_BACKEND_URL + `/places/${placeId}`);
 
         // 가져온 데이터로 loadedPlaces state 업데이트
         setLoadedPlaces(responseData.places);
@@ -85,7 +85,7 @@ const UpdatePlace = () => {
     try {
       // sendRequest 함수를 사용하여 장소 업데이트 요청 보내기
       await sendRequest(
-        `http://localhost:5000/api/places/${placeId}`,
+        process.env.REACT_APP_BACKEND_URL + `/places/${placeId}`,
         'PATCH',
         JSON.stringify({
           title: formState.inputs.title.value,

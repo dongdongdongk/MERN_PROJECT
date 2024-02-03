@@ -14,7 +14,7 @@ const Users = () => {
         const fetchUsers = async () => {
             // 비동기 함수 정의: API에 데이터 요청 및 처리
             try {
-                const responseData = await sendRequest('http://localhost:5000/api/users');
+                const responseData = await sendRequest(process.env.REACT_APP_BACKEND_URL + `/users`);
 
                 setLoadedUsers(responseData);
 

@@ -58,7 +58,7 @@ const NewPlace = () => {
 
       // useHttpClient 훅을 이용하여 서버에 POST 요청을 보냄
       const responseData = await sendRequest(
-        'http://localhost:5000/api/places', 
+        process.env.REACT_APP_BACKEND_URL + `/places`, 
         'POST',
         formData, 
         {

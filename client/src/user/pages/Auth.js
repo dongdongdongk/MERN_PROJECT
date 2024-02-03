@@ -43,7 +43,7 @@ const Auth = () => {
                 {
                     ...formState.inputs,
                     name: undefined,
-                    image : undefined
+                    image: undefined
                 },
                 formState.inputs.email.isValid && formState.inputs.password.isValid
             );
@@ -56,9 +56,9 @@ const Auth = () => {
                         value: '',
                         isValid: false
                     },
-                    image : {
-                        value : null,
-                        isValid : false
+                    image: {
+                        value: null,
+                        isValid: false
                     }
                 },
                 false
@@ -75,7 +75,7 @@ const Auth = () => {
             // 로그인 모드일 때
             try {
                 const responseData = await sendRequest(
-                    'http://localhost:5000/api/users/login',
+                    process.env.REACT_APP_BACKEND_URL + `/users/login`,
                     'POST',
                     JSON.stringify({
                         email: formState.inputs.email.value,
@@ -96,13 +96,13 @@ const Auth = () => {
             // 회원 가입 모드일 때
             try {
                 const formData = new FormData();
-                formData.append('name',formState.inputs.name.value)
-                formData.append('email',formState.inputs.email.value)
-                formData.append('password',formState.inputs.password.value)
-                formData.append('image',formState.inputs.image.value)
+                formData.append('name', formState.inputs.name.value)
+                formData.append('email', formState.inputs.email.value)
+                formData.append('password', formState.inputs.password.value)
+                formData.append('image', formState.inputs.image.value)
 
                 const responseData = await sendRequest(
-                    'http://localhost:5000/api/users/signup',
+                    process.env.REACT_APP_BACKEND_URL + `/users/signup`,
                     'POST',
                     formData
                 );
@@ -139,7 +139,7 @@ const Auth = () => {
                             onInput={inputHandler}
                         />
                     )}
-                    {!isLoginMode && <ImageUpload center id="image" onInput={inputHandler}/>}
+                    {!isLoginMode && <ImageUpload center id="image" onInput={inputHandler} />}
 
                     {/* 이메일 및 비밀번호 입력 필드 */}
                     <Input
