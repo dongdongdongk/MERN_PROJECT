@@ -22,7 +22,6 @@ const UserPlaces = () => {
             try {
                 // sendRequest 함수를 사용하여 백엔드로 Get 요청을 보내고 응답 데이터를 받아옵니다.
                 const responseData = await sendRequest(process.env.REACT_APP_BACKEND_URL + `/places/user/${userId}`);
-
                 // 받아온 데이터 중 places 키의 값을 loadedPlaces 상태에 업데이트합니다.
                 setLoadedPlaces(responseData.places);
             } catch (error) {

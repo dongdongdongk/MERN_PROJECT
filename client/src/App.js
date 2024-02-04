@@ -15,7 +15,7 @@ import useAuth from './shared/hooks/auth-hook';
 import LoadingSpinner from './shared/components/UIElements/LoadingSpinner';
 
 const Users = React.lazy(() => import('./user/pages/Users')) // 첫 페이지기 때문에 lazy 로딩이 필요없다 
-const NewPlace = React.lazy(() => import('./shared/components/Navigation/MainNavigation'))
+const NewPlace = React.lazy(() => import('./places/pages/NewPlace'))
 const UpdatePlace = React.lazy(() => import('./places/pages/UpdatePlace'))
 const UserPlaces = React.lazy(() => import('./places/pages/UserPlaces'))
 const Auth = React.lazy(() => import('./user/pages/Auth'))
